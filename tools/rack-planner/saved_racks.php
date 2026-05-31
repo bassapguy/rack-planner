@@ -22,7 +22,7 @@ function h($value): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Opgeslagen racks beheren</title>
+  <title>Saved racks beheren</title>
   <style>
     :root {
       --bg: #eef3f8;
@@ -212,23 +212,23 @@ function h($value): string {
   <div class="page">
     <div class="hero">
       <div>
-        <h1>Opgeslagen racks</h1>
-        <p>Beheer hier je opgeslagen rack-documenten. Je kunt racks openen in de editor, dupliceren als startpunt voor een variant, verwijderen en snel filteren op naam, locatie, project of template.</p>
+        <h1>Saved racks</h1>
+        <p>Manage your saved rack documents here. You can open racks in the editor, duplicate them as a starting point for a variation, delete them and quickly filter by name, location, project or template.</p>
       </div>
       <div class="hero-actions">
-        <a class="button secondary" href="index.php">Terug naar editor</a>
-        <a class="button primary" href="index.php?new=1">Nieuw rack</a>
+        <a class="button secondary" href="../../index.php">Home</a>
+        <a class="button primary" href="editor.php?new=1">New rack</a>
       </div>
     </div>
 
     <section class="panel">
       <div class="panel-head">
-        <h2>Beheer</h2>
-        <p>Tabelweergave met filteren, openen, dupliceren en verwijderen.</p>
+        <h2>Manage</h2>
+        <p>Table view with filtering, opening, duplicating and deleting.</p>
       </div>
       <div class="panel-body">
         <?php if (isset($_GET['status']) && $_GET['status'] === 'deleted'): ?>
-          <div class="flash success">Rack verwijderd.</div>
+          <div class="flash success">Rack deleted.</div>
         <?php elseif (isset($_GET['status']) && $_GET['status'] === 'duplicated'): ?>
           <div class="flash success">Rack gedupliceerd.</div>
         <?php elseif (isset($_GET['status']) && $_GET['status'] === 'error'): ?>
@@ -242,7 +242,7 @@ function h($value): string {
         <form class="filters" method="get" action="saved_racks.php">
           <div class="field">
             <label for="q">Filter</label>
-            <input id="q" name="q" type="text" value="<?php echo h($search); ?>" placeholder="Zoek op racknaam, locatie, project, versie of template">
+            <input id="q" name="q" type="text" value="<?php echo h($search); ?>" placeholder="Search by rack name, location, project, version or template">
           </div>
           <button class="button primary" type="submit">Filter toepassen</button>
           <a class="button secondary" href="saved_racks.php">Reset</a>
@@ -252,7 +252,7 @@ function h($value): string {
 
     <section class="panel">
       <div class="panel-head">
-        <h2>Alle opgeslagen racks</h2>
+        <h2>All saved racks</h2>
         <p><?php echo count($racks); ?> resultaat<?php echo count($racks) === 1 ? '' : 'en'; ?>.</p>
       </div>
       <div class="panel-body">
@@ -262,9 +262,9 @@ function h($value): string {
               <thead>
                 <tr>
                   <th>Rack</th>
-                  <th>Locatie / project</th>
+                  <th>Location / project</th>
                   <th>Template</th>
-                  <th>Versie / datum</th>
+                  <th>Version / date</th>
                   <th>Inhoud</th>
                   <th>Laatst bijgewerkt</th>
                   <th>Acties</th>
@@ -275,7 +275,7 @@ function h($value): string {
                   <tr>
                     <td>
                       <span class="rack-title"><?php echo h($rack['rackName']); ?></span>
-                      <div class="rack-meta"><?php echo (int)$rack['rackUnits']; ?> HE · ID <?php echo (int)$rack['id']; ?></div>
+                      <div class="rack-meta"><?php echo (int)$rack['rackUnits']; ?> U · ID <?php echo (int)$rack['id']; ?></div>
                     </td>
                     <td>
                       <div><?php echo h($rack['location'] !== '' ? $rack['location'] : '—'); ?></div>
@@ -292,18 +292,18 @@ function h($value): string {
                     <td class="muted"><?php echo h($rack['updatedAt'] ?? ''); ?></td>
                     <td>
                       <div class="row-actions">
-                        <a class="button secondary" href="index.php?rack=<?php echo (int)$rack['id']; ?>">Openen</a>
+                        <a class="button secondary" href="editor.php?rack=<?php echo (int)$rack['id']; ?>">Open</a>
                         <form class="inline-form" method="post" action="rack_actions.php">
                           <input type="hidden" name="action" value="duplicate">
                           <input type="hidden" name="rack_id" value="<?php echo (int)$rack['id']; ?>">
                           <input type="hidden" name="return_url" value="saved_racks.php<?php echo $search !== '' ? '?q=' . urlencode($search) : ''; ?>">
                           <button class="button secondary" type="submit">Dupliceren</button>
                         </form>
-                        <form class="inline-form" method="post" action="rack_actions.php" onsubmit="return confirm('Weet je zeker dat je dit rack wilt verwijderen?');">
+                        <form class="inline-form" method="post" action="rack_actions.php" onsubmit="return confirm('Are you sure you want to delete this rack?');">
                           <input type="hidden" name="action" value="delete">
                           <input type="hidden" name="rack_id" value="<?php echo (int)$rack['id']; ?>">
                           <input type="hidden" name="return_url" value="saved_racks.php<?php echo $search !== '' ? '?q=' . urlencode($search) : ''; ?>">
-                          <button class="button danger" type="submit">Verwijderen</button>
+                          <button class="button danger" type="submit">Delete</button>
                         </form>
                       </div>
                     </td>
@@ -314,7 +314,7 @@ function h($value): string {
           </div>
         <?php else: ?>
           <div class="empty-state">
-            <strong>Geen racks gevonden</strong>
+            <strong>No racks found</strong>
             Pas je filter aan of maak eerst een nieuw rack aan in de editor.
           </div>
         <?php endif; ?>

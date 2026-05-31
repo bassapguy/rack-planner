@@ -1,0 +1,35 @@
+.table-wrap {
+  overflow: auto;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 14px 16px;
+  vertical-align: top;
+  border-bottom: 1px solid #e9edf5;
+}
+
+th {
+  background: #f7f9fc;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--muted);
+}
+
+tbody tr:hover {
+  background: #fafcff;
+}
+
+.inline-form {
+  margin: 0;
+}

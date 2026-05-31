@@ -2,13 +2,13 @@
 require_once __DIR__ . '/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: index.php?status=error&message=' . urlencode('Ongeldige request.'));
+    header('Location: editor.php?status=error&message=' . urlencode('Ongeldige request.'));
     exit;
 }
 
 $id = trim($_POST['id'] ?? '');
 if ($id === '') {
-    header('Location: index.php?status=error&message=' . urlencode('Geen library-item geselecteerd.'));
+    header('Location: editor.php?status=error&message=' . urlencode('Geen library-item geselecteerd.'));
     exit;
 }
 
@@ -26,14 +26,14 @@ try {
         $checkStmt = $pdo->prepare('SELECT id FROM library_items WHERE uuid = :uuid LIMIT 1');
         $checkStmt->execute([':uuid' => $id]);
         if (!$checkStmt->fetchColumn()) {
-            header('Location: index.php?status=error&message=' . urlencode('Library-item niet gevonden.'));
+            header('Location: editor.php?status=error&message=' . urlencode('Library-item niet gevonden.'));
             exit;
         }
     }
 
-    header('Location: index.php?status=deleted');
+    header('Location: editor.php?status=deleted');
     exit;
 } catch (Throwable $e) {
-    header('Location: index.php?status=error&message=' . urlencode('Verwijderen mislukt: ' . $e->getMessage()));
+    header('Location: editor.php?status=error&message=' . urlencode('Verwijderen mislukt: ' . $e->getMessage()));
     exit;
 }

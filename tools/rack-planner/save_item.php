@@ -9,7 +9,7 @@ function buildLibraryItemName(string $name, int $he): string
 
 function fail(string $message, ?string $editId = null): void
 {
-    $location = 'index.php?status=error&message=' . urlencode($message);
+    $location = 'editor.php?status=error&message=' . urlencode($message);
     if ($editId) {
         $location .= '&edit=' . urlencode($editId);
     }
@@ -123,7 +123,7 @@ try {
             }
         }
 
-        header('Location: index.php?status=updated');
+        header('Location: editor.php?status=updated');
         exit;
     }
 
@@ -140,7 +140,7 @@ try {
         ':svg_path' => $svgUrl,
     ]);
 
-    header('Location: index.php?status=saved');
+    header('Location: editor.php?status=saved');
     exit;
 } catch (Throwable $e) {
     fail('Opslaan mislukt: ' . $e->getMessage(), $existingId ?: null);

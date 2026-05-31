@@ -210,7 +210,7 @@ try {
     rackJsonResponse([
         'ok' => true,
         'rackId' => $rackId,
-        'redirectUrl' => 'index.php?rack=' . $rackId . '&status=rack-saved',
+        'redirectUrl' => 'editor.php?rack=' . $rackId . '&status=rack-saved',
     ]);
 } catch (Throwable $e) {
     if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {

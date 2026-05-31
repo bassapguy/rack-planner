@@ -1,0 +1,50 @@
+form,
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field,
+.control-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+label,
+.field > label,
+.control-field > label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="file"],
+input[type="date"],
+input[type="search"],
+select,
+textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+  color: var(--text);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid rgba(45, 91, 255, 0.18);
+  border-color: var(--accent);
+}
+
+.help,
+small.help {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}

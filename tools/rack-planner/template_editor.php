@@ -38,7 +38,7 @@ if ($template === null) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><?php echo $template['id'] ? 'Template bewerken' : 'Nieuw template'; ?></title>
+  <title><?php echo $template['id'] ? 'Edit template' : 'New template'; ?></title>
   <style>
     :root {
       --bg: #eef3f8; --panel: #fff; --panel-soft: #f7f9fc; --text: #172033; --muted: #667085; --border: #d7deea; --accent: #2d5bff; --success: #0f9d58; --danger: #d92d20; --shadow: 0 18px 44px rgba(15,23,42,.10); font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -80,12 +80,12 @@ if ($template === null) {
   <div class="page">
     <section class="hero">
       <div>
-        <h1><?php echo $template['id'] ? 'Template bewerken' : 'Nieuw template'; ?></h1>
-        <p>Beheer hier de templatebasis voor je A4 export. Rack Design staat vast als documenttitel; jij bepaalt naam, branding en welke metadata-velden zichtbaar of verplicht zijn.</p>
+        <h1><?php echo $template['id'] ? 'Edit template' : 'New template'; ?></h1>
+        <p>Manage hier de templatebasis voor je A4 export. Rack Design staat vast als documenttitel; jij bepaalt naam, branding en welke metadata-fields zichtbaar of verplicht zijn.</p>
       </div>
       <div class="hero-actions">
-        <a class="button secondary" href="saved_templates.php">Terug naar templates</a>
-        <a class="button secondary" href="index.php">Terug naar planner</a>
+        <a class="button secondary" href="saved_templates.php">Back to templates</a>
+        <a class="button secondary" href="../../index.php">Home</a>
       </div>
     </section>
 
@@ -95,14 +95,14 @@ if ($template === null) {
 
     <form class="panel" method="post" action="save_template.php" enctype="multipart/form-data">
       <div class="panel-head">
-        <h2>Template-instellingen</h2>
+        <h2>Template settings</h2>
         <p>Logo upload werkt direct naar uploads/logos. Velden hieronder bepalen straks wat zichtbaar en verplicht is in de planner en export.</p>
       </div>
       <div class="panel-body">
         <input type="hidden" name="template_id" value="<?php echo (int)($template['id'] ?? 0); ?>">
         <div class="grid">
           <div class="field">
-            <label for="name">Template naam</label>
+            <label for="name">Template name</label>
             <input id="name" name="name" type="text" value="<?php echo h($template['name']); ?>" required>
           </div>
           <div class="field">
@@ -110,15 +110,15 @@ if ($template === null) {
             <input id="slug" name="slug" type="text" value="<?php echo h($template['slug']); ?>" placeholder="coolblue-v1">
           </div>
           <div class="field">
-            <label for="document_title">Documenttitel</label>
+            <label for="document_title">Document title</label>
             <input id="document_title" name="document_title" type="text" value="<?php echo h($template['documentTitle']); ?>" readonly>
             <small>Deze staat nu vast op Rack Design.</small>
           </div>
-          <label class="checkbox"><input type="checkbox" name="is_default" value="1"<?php echo !empty($template['isDefault']) ? ' checked' : ''; ?>> Maak dit het standaard template</label>
+          <label class="checkbox"><input type="checkbox" name="is_default" value="1"<?php echo !empty($template['isDefault']) ? ' checked' : ''; ?>> Make this the default template</label>
           <div class="field full">
             <label for="logo_file">Logo upload</label>
             <input id="logo_file" name="logo_file" type="file" accept=".png,.jpg,.jpeg,.svg,.webp">
-            <small>Laat leeg om het huidige logo te behouden.</small>
+            <small>Leave empty to keep the current logo.</small>
           </div>
           <div class="field full">
             <label>Huidig logo</label>
@@ -130,14 +130,14 @@ if ($template === null) {
                   <div class="muted" style="margin-top:8px;"><?php echo h($template['logoPath']); ?></div>
                 </div>
               <?php else: ?>
-                <div class="muted">Nog geen logo gekoppeld.</div>
+                <div class="muted">No logo linked yet.</div>
               <?php endif; ?>
             </div>
           </div>
         </div>
 
         <div>
-          <h2 style="margin:0 0 12px; font-size:20px; letter-spacing:-.02em;">Metadata-velden</h2>
+          <h2 style="margin:0 0 12px; font-size:20px; letter-spacing:-.02em;">Metadata-fields</h2>
           <table>
             <thead>
               <tr>
@@ -163,8 +163,8 @@ if ($template === null) {
         </div>
 
         <div class="hero-actions">
-          <button class="button primary" type="submit">Template opslaan</button>
-          <a class="button secondary" href="saved_templates.php">Annuleren</a>
+          <button class="button primary" type="submit">Save template</button>
+          <a class="button secondary" href="saved_templates.php">Cancel</a>
         </div>
       </div>
     </form>

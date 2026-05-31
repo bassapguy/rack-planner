@@ -24,7 +24,7 @@ $message = (string)($_GET['message'] ?? '');
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Templates beheren</title>
+  <title>Manage templates</title>
   <style>
     :root {
       --bg: #eef3f8; --panel: #ffffff; --panel-soft: #f7f9fc; --text: #172033; --muted: #667085; --border: #d7deea; --accent: #2d5bff; --danger: #d92d20; --success: #0f9d58; --shadow: 0 18px 44px rgba(15,23,42,.10); font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -70,29 +70,29 @@ $message = (string)($_GET['message'] ?? '');
   <div class="page">
     <section class="hero">
       <div>
-        <h1>Templates beheren</h1>
-        <p>Beheer je exporttemplates los van de editor. Dupliceren, verwijderen, filteren en open direct een template om velden of branding aan te passen.</p>
+        <h1>Manage templates</h1>
+        <p>Manage your export templates separately from the editor. Duplicate, delete, filter and open a template directly to adjust fields or branding.</p>
       </div>
       <div class="hero-actions">
-        <a class="button secondary" href="index.php">Terug naar planner</a>
-        <a class="button primary" href="template_editor.php">Nieuw template</a>
+        <a class="button secondary" href="../../index.php">Home</a>
+        <a class="button primary" href="template_editor.php">New template</a>
       </div>
     </section>
 
     <section class="panel">
       <div class="panel-head">
         <h2>Overzicht</h2>
-        <p>Zoek op naam, slug of documenttitel en beheer je templates vanuit één pagina.</p>
+        <p>Search by name, slug or document title and manage your templates from one page.</p>
       </div>
       <div class="panel-body">
         <?php if ($databaseError !== null): ?>
           <div class="flash error"><?php echo h($databaseError); ?></div>
         <?php elseif ($status === 'saved'): ?>
-          <div class="flash success">Template opgeslagen.</div>
+          <div class="flash success">Template saved.</div>
         <?php elseif ($status === 'duplicated'): ?>
-          <div class="flash success">Template gedupliceerd.</div>
+          <div class="flash success">Template duplicated.</div>
         <?php elseif ($status === 'deleted'): ?>
-          <div class="flash success">Template verwijderd.</div>
+          <div class="flash success">Template deleted.</div>
         <?php elseif ($status === 'error'): ?>
           <div class="flash error"><?php echo h($message !== '' ? $message : 'Actie mislukt.'); ?></div>
         <?php endif; ?>
@@ -100,7 +100,7 @@ $message = (string)($_GET['message'] ?? '');
         <form class="filters" method="get">
           <div class="field">
             <label for="q">Filter</label>
-            <input id="q" name="q" type="search" value="<?php echo h($search); ?>" placeholder="Zoek op naam, slug of documenttitel">
+            <input id="q" name="q" type="search" value="<?php echo h($search); ?>" placeholder="Search by name, slug or document title">
           </div>
           <div class="filters-actions">
             <button class="button secondary" type="submit">Filteren</button>
@@ -111,8 +111,8 @@ $message = (string)($_GET['message'] ?? '');
         <div class="table-wrap" style="margin-top:20px;">
           <?php if ($templates === []): ?>
             <div class="empty-state">
-              <strong>Geen templates gevonden</strong>
-              <span>Maak je eerste template aan of pas je filter aan.</span>
+              <strong>No templates found</strong>
+              <span>Create your first template or adjust your filter.</span>
             </div>
           <?php else: ?>
             <table>
@@ -136,24 +136,24 @@ $message = (string)($_GET['message'] ?? '');
                       <?php if ($template['isDefault']): ?><div class="badge" style="margin-top:8px;">Default</div><?php endif; ?>
                     </td>
                     <td><span class="badge"><?php echo h($template['slug']); ?></span></td>
-                    <td><?php echo $template['logoPath'] !== '' ? '<span class="badge">Ja</span>' : '<span class="muted">Geen logo</span>'; ?></td>
-                    <td><span class="badge"><?php echo (int)$template['fieldCount']; ?> velden</span></td>
+                    <td><?php echo $template['logoPath'] !== '' ? '<span class="badge">Yes</span>' : '<span class="muted">No logo</span>'; ?></td>
+                    <td><span class="badge"><?php echo (int)$template['fieldCount']; ?> fields</span></td>
                     <td><span class="badge"><?php echo (int)$template['rackCount']; ?> racks</span></td>
                     <td class="muted"><?php echo h($template['updatedAt'] ?? ''); ?></td>
                     <td>
                       <div class="row-actions">
-                        <a class="button secondary" href="template_editor.php?id=<?php echo (int)$template['id']; ?>">Openen</a>
+                        <a class="button secondary" href="template_editor.php?id=<?php echo (int)$template['id']; ?>">Open</a>
                         <form class="inline-form" method="post" action="template_actions.php">
                           <input type="hidden" name="action" value="duplicate">
                           <input type="hidden" name="template_id" value="<?php echo (int)$template['id']; ?>">
                           <input type="hidden" name="return_url" value="saved_templates.php<?php echo $search !== '' ? '?q=' . rawurlencode($search) : ''; ?>">
                           <button class="button secondary" type="submit">Dupliceren</button>
                         </form>
-                        <form class="inline-form" method="post" action="template_actions.php" onsubmit="return confirm('Weet je zeker dat je deze template wilt verwijderen?');">
+                        <form class="inline-form" method="post" action="template_actions.php" onsubmit="return confirm('Are you sure you want to delete this template?');">
                           <input type="hidden" name="action" value="delete">
                           <input type="hidden" name="template_id" value="<?php echo (int)$template['id']; ?>">
                           <input type="hidden" name="return_url" value="saved_templates.php<?php echo $search !== '' ? '?q=' . rawurlencode($search) : ''; ?>">
-                          <button class="button danger" type="submit">Verwijderen</button>
+                          <button class="button danger" type="submit">Delete</button>
                         </form>
                       </div>
                     </td>
