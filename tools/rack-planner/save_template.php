@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../../bootstrap.php';
+toolboxRequireRole(['super_admin', 'admin']);
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/rack_repository.php';
 

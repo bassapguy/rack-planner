@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../../bootstrap.php';
+toolboxRequireRole(['super_admin', 'admin', 'editor']);
 require_once __DIR__ . '/db.php';
 
 header('Content-Type: application/json; charset=UTF-8');

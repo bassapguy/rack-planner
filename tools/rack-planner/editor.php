@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../../bootstrap.php';
+$user = toolboxRequireRole(['super_admin', 'admin', 'editor']);
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/rack_repository.php';
 
@@ -153,6 +155,7 @@ $isEditMode = $editItem !== null;
   <link rel="stylesheet" href="assets/css/rack-planner.css?v=<?php echo @filemtime(__DIR__ . '/assets/css/rack-planner.css') ?: time(); ?>">
 </head>
 <body>
+<?php $flash = toolboxConsumeFlash(); ?>
   <a class="fab-new-rack" href="editor.php?new=1" title="New rack">
     <span class="icon" aria-hidden="true">＋</span>
     <span class="label">New rack</span>
