@@ -1461,10 +1461,11 @@ $isEditMode = $editItem !== null;
         const connectorInset = Math.max(8, Math.min(18, boxH / 2));
         const connectorY = Math.max(boxY + connectorInset, Math.min(boxY + boxH - connectorInset, anchorY));
         const currentCommentX = commentColumnXs[Math.min(1, Math.max(0, columnIndex))];
+        const noteMeta = getNoteColorMeta(item.noteColor);
 
-        svg += `<line x1="${rackEdgeX + 4}" y1="${itemCenterY}" x2="${currentCommentX - 10}" y2="${connectorY}" stroke="#cbd5e1" stroke-width="1.5"/>`;
-        svg += `<circle cx="${rackEdgeX + 4}" cy="${itemCenterY}" r="3.5" fill="#94a3b8"/>`;
-        svg += `<rect x="${currentCommentX}" y="${boxY}" width="${commentColumnW}" height="${boxH}" rx="10" ry="10" fill="#ffffff" stroke="#d6dbe7"/>`;
+        svg += `<line x1="${rackEdgeX + 4}" y1="${itemCenterY}" x2="${currentCommentX - 10}" y2="${connectorY}" stroke="${escapeXml(noteMeta.line)}" stroke-width="1.5"/>`;
+        svg += `<circle cx="${rackEdgeX + 4}" cy="${itemCenterY}" r="3.5" fill="${escapeXml(noteMeta.dot)}"/>`;
+        svg += `<rect x="${currentCommentX}" y="${boxY}" width="${commentColumnW}" height="${boxH}" rx="10" ry="10" fill="${escapeXml(noteMeta.fill)}" stroke="${escapeXml(noteMeta.stroke)}"/>`;
         svg += buildSvgTextBlock(textLines, currentCommentX + 10, textStartY, textLineHeight, textFontSize, '#0f172a', '700');
       });
 
