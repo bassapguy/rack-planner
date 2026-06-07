@@ -1,6 +1,4 @@
 <?php
-require_once __DIR__ . '/../../bootstrap.php';
-$user = toolboxRequireToolAccess('rack-planner', 'rack_planner.edit');
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/rack_repository.php';
 
@@ -143,26 +141,21 @@ if ($editItem !== null) {
 $isEditMode = $editItem !== null;
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rack Planner Editor</title>
-  <link rel="stylesheet" href="../../assets/css/base.css?v=<?php echo @filemtime(__DIR__ . '/../../assets/css/base.css') ?: time(); ?>">
-  <link rel="stylesheet" href="../../assets/css/buttons.css?v=<?php echo @filemtime(__DIR__ . '/../../assets/css/buttons.css') ?: time(); ?>">
-  <link rel="stylesheet" href="../../assets/css/forms.css?v=<?php echo @filemtime(__DIR__ . '/../../assets/css/forms.css') ?: time(); ?>">
-  <link rel="stylesheet" href="../../assets/css/tables.css?v=<?php echo @filemtime(__DIR__ . '/../../assets/css/tables.css') ?: time(); ?>">
-  <link rel="stylesheet" href="assets/css/rack-planner.css?v=<?php echo @filemtime(__DIR__ . '/assets/css/rack-planner.css') ?: time(); ?>">
+  <link rel="stylesheet" href="app.css?v=<?php echo file_exists(__DIR__ . '/app.css') ? filemtime(__DIR__ . '/app.css') : time(); ?>">
 </head>
 <body>
-<?php $flash = toolboxConsumeFlash(); ?>
   <a class="fab-new-rack" href="editor.php?new=1" title="New rack">
     <span class="icon" aria-hidden="true">＋</span>
     <span class="label">New rack</span>
   </a>
 
   <div class="floating-actions" aria-label="Quick actions">
-    <a class="floating-action secondary" href="../../index.php" title="Home">
+    <a class="floating-action secondary" href="index.php" title="Home">
       <span class="icon" aria-hidden="true">🏠</span>
       <span class="button-label">Home</span>
     </a>
@@ -697,25 +690,6 @@ $isEditMode = $editItem !== null;
       return '';
     }
 
-
-    const NOTE_COLOR_META = {
-      neutral: { label: 'Neutral', fill: '#ffffff', stroke: '#d6dbe7', line: '#cbd5e1', dot: '#94a3b8', chip: '#e2e8f0' },
-      yellow:  { label: 'Yellow',  fill: '#fef3c7', stroke: '#f59e0b', line: '#f59e0b', dot: '#d97706', chip: '#fbbf24' },
-      blue:    { label: 'Blue',    fill: '#dbeafe', stroke: '#60a5fa', line: '#60a5fa', dot: '#2563eb', chip: '#60a5fa' },
-      green:   { label: 'Green',   fill: '#dcfce7', stroke: '#4ade80', line: '#4ade80', dot: '#16a34a', chip: '#4ade80' },
-      purple:  { label: 'Purple',  fill: '#f3e8ff', stroke: '#c084fc', line: '#c084fc', dot: '#9333ea', chip: '#c084fc' },
-      red:     { label: 'Red',     fill: '#fee2e2', stroke: '#f87171', line: '#f87171', dot: '#dc2626', chip: '#f87171' }
-    };
-
-    function normalizeNoteColor(color) {
-      const key = typeof color === 'string' ? color.trim().toLowerCase() : '';
-      return NOTE_COLOR_META[key] ? key : 'neutral';
-    }
-
-    function getNoteColorMeta(color) {
-      return NOTE_COLOR_META[normalizeNoteColor(color)] || NOTE_COLOR_META.neutral;
-    }
-
     function normalizeItem(item) {
       if (!item || !item.svgUrl || !item.name) return null;
       const he = parseInt(item.he, 10);
@@ -733,7 +707,6 @@ $isEditMode = $editItem !== null;
         svgDataUri: typeof item.svgDataUri === 'string' ? item.svgDataUri : null,
         uStart,
         comments: normalizeComment(item.comments),
-        noteColor: normalizeNoteColor(item.noteColor),
         face: item.face === 'back' ? 'back' : 'front'
       };
     }
@@ -990,7 +963,6 @@ $isEditMode = $editItem !== null;
         svgDataUri: libItem.svgDataUri || null,
         uStart: nextStart,
         comments: '',
-        noteColor: 'neutral',
         face: state.currentFace
       });
       renderItems();
@@ -1005,14 +977,6 @@ $isEditMode = $editItem !== null;
       const item = state.items.find(entry => entry.instanceId === instanceId);
       if (!item) return;
       item.comments = value;
-      saveState();
-    }
-
-    function updateCommentColor(instanceId, value) {
-      const item = state.items.find(entry => entry.instanceId === instanceId);
-      if (!item) return;
-      item.noteColor = normalizeNoteColor(value);
-      renderComments();
       saveState();
     }
 
@@ -1133,35 +1097,20 @@ $isEditMode = $editItem !== null;
 
       commentLayouts.forEach(({ item, boxY, boxH, anchorY }) => {
         const card = document.createElement('div');
-        const noteColor = normalizeNoteColor(item.noteColor);
-        const noteMeta = getNoteColorMeta(noteColor);
         card.className = 'comment-card';
-        card.dataset.noteColor = noteColor;
         card.style.top = boxY + 'px';
         card.style.minHeight = boxH + 'px';
         card.style.setProperty('--connector-top', Math.max(16, Math.min(boxH - 16, anchorY - boxY)) + 'px');
-        card.style.setProperty('--note-fill', noteMeta.fill);
-        card.style.setProperty('--note-stroke', noteMeta.stroke);
-        card.style.setProperty('--note-line', noteMeta.line);
-        card.style.setProperty('--note-dot', noteMeta.dot);
         card.innerHTML = `
           <div class="comment-head">
             <span class="comment-title">${escapeHtml(item.name)}</span>
             <span>${faceLabel(item.face)} · ${item.he} U · U${item.uStart}</span>
-          </div>
-          <div class="comment-color-picker" role="group" aria-label="Note color">
-            ${Object.entries(NOTE_COLOR_META).map(([colorKey, meta]) => `
-              <button type="button" class="comment-color-chip${colorKey === noteColor ? ' is-active' : ''}" data-color="${colorKey}" title="${meta.label}" aria-label="${meta.label}" style="--chip:${meta.chip};"></button>
-            `).join('')}
           </div>
           <input class="comment-body" type="text" value="${escapeHtml(normalizeComment(item.comments))}" placeholder="${escapeHtml(item.name)} - comment">
         `;
 
         const input = card.querySelector('.comment-body');
         input.addEventListener('input', (event) => updateComment(item.instanceId, event.target.value));
-        card.querySelectorAll('.comment-color-chip').forEach((button) => {
-          button.addEventListener('click', () => updateCommentColor(item.instanceId, button.dataset.color || 'neutral'));
-        });
         commentsLane.appendChild(card);
       });
     }

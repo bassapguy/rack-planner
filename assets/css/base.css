@@ -208,3 +208,56 @@ input, button, select, textarea { font: inherit; }
     min-width: 100%;
   }
 }
+
+
+auth-shell, .auth-shell {
+  max-width: 620px;
+}
+
+.auth-panel {
+  margin: 0 auto;
+}
+
+.auth-title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.auth-actions {
+  margin-top: 8px;
+}
+
+.auth-info-panel {
+  margin-bottom: 18px;
+}
+
+.auth-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-code-block {
+  display: block;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.topbar-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}

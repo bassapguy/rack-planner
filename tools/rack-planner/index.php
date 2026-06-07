@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
-$user = toolboxRequireLogin();
+$user = toolboxRequireToolAccess('rack-planner', 'rack_planner.access');
 $flash = toolboxConsumeFlash();
 ?><!DOCTYPE html>
 <html lang="en">
@@ -36,6 +36,8 @@ $flash = toolboxConsumeFlash();
       
     </header>
 
+    <?php $canEdit = toolboxUserCan('rack_planner.edit', $user); $canRacks = toolboxUserCan('rack_planner.racks.manage', $user); $canTemplates = toolboxUserCan('rack_planner.templates.manage', $user); ?>
+
     <section class="panel">
       <div class="panel-head">
         <h2>Rack Planner tools</h2>
@@ -43,6 +45,7 @@ $flash = toolboxConsumeFlash();
       </div>
       <div class="panel-body">
         <div class="tool-grid">
+          <?php if ($canEdit): ?>
           <a class="tool-card" href="editor.php">
             <div class="tool-card-title">Rack editor</div>
             <div class="tool-card-copy">Build front and back rack layouts, manage comments, and export printable views.</div>
@@ -59,6 +62,19 @@ $flash = toolboxConsumeFlash();
             <div class="tool-card-title">Saved Racks</div>
             <div class="tool-card-copy">Browse, duplicate, delete, and reopen saved rack documents.</div>
           </a>
+          <?php endif; ?>
+          <?php if ($canRacks): ?>
+          <a class="tool-card" href="saved_racks.php">
+            <div class="tool-card-title">Saved racks</div>
+            <div class="tool-card-copy">Open the saved rack management page.</div>
+          </a>
+          <?php endif; ?>
+          <?php if ($canTemplates): ?>
+          <a class="tool-card" href="saved_templates.php">
+            <div class="tool-card-title">Export templates</div>
+            <div class="tool-card-copy">Manage the export templates used by Rack Planner.</div>
+          </a>
+          <?php endif; ?>
         </div>
       </div>
     </section>

@@ -1,7 +1,4 @@
 <?php
-require_once __DIR__ . '/../../bootstrap.php';
-$user = toolboxRequireToolAccess('rack-planner', 'rack_planner.edit');
-toolboxRequireRole(['super_admin', 'admin', 'editor']);
 require_once __DIR__ . '/db.php';
 
 header('Content-Type: application/json; charset=UTF-8');
@@ -56,10 +53,6 @@ foreach ($items as $item) {
     $name = trim((string)($item['name'] ?? ''));
     $svgUrl = trim((string)($item['svgUrl'] ?? ''));
     $comments = trim((string)($item['comments'] ?? ''));
-    $noteColor = strtolower(trim((string)($item['noteColor'] ?? 'neutral')));
-    if (!in_array($noteColor, ['neutral', 'yellow', 'blue', 'green', 'purple', 'red'], true)) {
-        $noteColor = 'neutral';
-    }
     $face = (($item['face'] ?? 'front') === 'back') ? 'back' : 'front';
     $he = (int)($item['he'] ?? 0);
     $widthPct = (int)($item['widthPct'] ?? 0);
@@ -87,7 +80,6 @@ foreach ($items as $item) {
         'svgUrl' => $svgUrl,
         'uStart' => $uStart,
         'comments' => $comments,
-        'noteColor' => $noteColor,
         'face' => $face,
     ];
 
@@ -177,7 +169,6 @@ try {
                 side,
                 u_position,
                 comment_text,
-                note_color,
                 item_name_snapshot,
                 he_snapshot,
                 width_pct_snapshot,
@@ -188,7 +179,6 @@ try {
                 :side,
                 :u_position,
                 :comment_text,
-                :note_color,
                 :item_name_snapshot,
                 :he_snapshot,
                 :width_pct_snapshot,
@@ -207,7 +197,6 @@ try {
             $itemStmt->bindValue(':side', $item['face']);
             $itemStmt->bindValue(':u_position', $item['uStart'], PDO::PARAM_INT);
             $itemStmt->bindValue(':comment_text', $item['comments'] !== '' ? $item['comments'] : null, $item['comments'] !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
-            $itemStmt->bindValue(':note_color', $item['noteColor'] ?? 'neutral');
             $itemStmt->bindValue(':item_name_snapshot', $item['name']);
             $itemStmt->bindValue(':he_snapshot', $item['he'], PDO::PARAM_INT);
             $itemStmt->bindValue(':width_pct_snapshot', $item['widthPct'], PDO::PARAM_INT);

@@ -1,6 +1,4 @@
 <?php
-require_once __DIR__ . '/../../bootstrap.php';
-$user = toolboxRequireToolAccess('rack-planner', 'rack_planner.templates.manage');
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/rack_repository.php';
 
@@ -87,7 +85,7 @@ if ($template === null) {
       </div>
       <div class="hero-actions">
         <a class="button secondary" href="saved_templates.php">Back to templates</a>
-        <a class="button secondary" href="../../index.php">Home</a>
+        <a class="button secondary" href="index.php">Home</a>
       </div>
     </section>
 

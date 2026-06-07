@@ -1,6 +1,4 @@
 <?php
-require_once __DIR__ . '/../../bootstrap.php';
-$user = toolboxRequireToolAccess('rack-planner', 'rack_planner.templates.manage');
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/rack_repository.php';
 
@@ -76,7 +74,7 @@ $message = (string)($_GET['message'] ?? '');
         <p>Manage your export templates separately from the editor. Duplicate, delete, filter and open a template directly to adjust fields or branding.</p>
       </div>
       <div class="hero-actions">
-        <a class="button secondary" href="../../index.php">Home</a>
+        <a class="button secondary" href="index.php">Home</a>
         <a class="button primary" href="template_editor.php">New template</a>
       </div>
     </section>

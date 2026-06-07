@@ -114,7 +114,6 @@ function rackPlannerLoadRackDetails(PDO $pdo, int $rackId): ?array
                 ri.side,
                 ri.u_position,
                 ri.comment_text,
-                ri.note_color,
                 ri.item_name_snapshot,
                 ri.he_snapshot,
                 ri.width_pct_snapshot,
@@ -138,7 +137,6 @@ function rackPlannerLoadRackDetails(PDO $pdo, int $rackId): ?array
             'svgUrl' => (string)$item['svg_path_snapshot'],
             'uStart' => (int)$item['u_position'],
             'comments' => $item['comment_text'] !== null ? (string)$item['comment_text'] : '',
-            'noteColor' => $item['note_color'] !== null ? (string)$item['note_color'] : 'neutral',
             'face' => $item['side'] === 'back' ? 'back' : 'front',
         ];
     }
@@ -272,7 +270,6 @@ function rackPlannerDuplicateRack(PDO $pdo, int $rackId): ?int
                                         side,
                                         u_position,
                                         comment_text,
-                                        note_color,
                                         item_name_snapshot,
                                         he_snapshot,
                                         width_pct_snapshot,
@@ -283,7 +280,6 @@ function rackPlannerDuplicateRack(PDO $pdo, int $rackId): ?int
                                            side,
                                            u_position,
                                            comment_text,
-                                           note_color,
                                            item_name_snapshot,
                                            he_snapshot,
                                            width_pct_snapshot,

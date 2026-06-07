@@ -1,7 +1,4 @@
 <?php
-require_once __DIR__ . '/../../bootstrap.php';
-$user = toolboxRequireToolAccess('rack-planner', 'rack_planner.racks.manage');
-toolboxRequireRole(['super_admin', 'admin', 'editor']);
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/rack_repository.php';
 

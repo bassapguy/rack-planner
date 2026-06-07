@@ -456,3 +456,382 @@ function toolboxCreateUser(PDO $pdo, array $payload): int
 
     return (int)$pdo->lastInsertId();
 }
+
+
+function toolboxTableExists(PDO $pdo, string $table): bool
+{
+    static $cache = [];
+    $key = spl_object_hash($pdo) . '|' . $table;
+    if (array_key_exists($key, $cache)) {
+        return $cache[$key];
+    }
+
+    try {
+        $stmt = $pdo->prepare('SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = :table LIMIT 1');
+        $stmt->execute([':table' => $table]);
+        $cache[$key] = (bool)$stmt->fetchColumn();
+    } catch (Throwable $e) {
+        $cache[$key] = false;
+    }
+
+    return $cache[$key];
+}
+
+function toolboxDefaultRoleDefinitions(): array
+{
+    return [
+        'super_admin' => [
+            'label' => 'Super Admin',
+            'description' => 'Full platform access including security and role management.',
+        ],
+        'admin' => [
+            'label' => 'Admin',
+            'description' => 'Operational administrator for users and tool management.',
+        ],
+        'editor' => [
+            'label' => 'Editor',
+            'description' => 'Can work inside tools and edit tool content.',
+        ],
+        'viewer' => [
+            'label' => 'Viewer',
+            'description' => 'Read-only user with access to approved tools.',
+        ],
+    ];
+}
+
+function toolboxDefaultPermissionDefinitions(): array
+{
+    return [
+        'toolbox.access' => ['label' => 'Access toolbox', 'description' => 'Can sign in and access the toolbox overview.'],
+        'users.manage' => ['label' => 'Manage users', 'description' => 'Create, edit, activate, and deactivate users.'],
+        'roles.manage' => ['label' => 'Manage roles', 'description' => 'Edit role permission assignments.'],
+        'tools.manage' => ['label' => 'Manage tools', 'description' => 'Register tools and control publish, hold, archive, and delete status.'],
+        'rack_planner.access' => ['label' => 'Access Rack Planner', 'description' => 'Open the Rack Planner module.'],
+        'rack_planner.edit' => ['label' => 'Edit in Rack Planner', 'description' => 'Use the Rack Planner editor and library actions.'],
+        'rack_planner.racks.manage' => ['label' => 'Manage saved racks', 'description' => 'Open, duplicate, and delete saved racks.'],
+        'rack_planner.templates.manage' => ['label' => 'Manage export templates', 'description' => 'Create and edit Rack Planner export templates.'],
+    ];
+}
+
+function toolboxDefaultRolePermissionMap(): array
+{
+    return [
+        'super_admin' => array_keys(toolboxDefaultPermissionDefinitions()),
+        'admin' => [
+            'toolbox.access',
+            'users.manage',
+            'tools.manage',
+            'rack_planner.access',
+            'rack_planner.edit',
+            'rack_planner.racks.manage',
+            'rack_planner.templates.manage',
+        ],
+        'editor' => [
+            'toolbox.access',
+            'rack_planner.access',
+            'rack_planner.edit',
+        ],
+        'viewer' => [
+            'toolbox.access',
+            'rack_planner.access',
+        ],
+    ];
+}
+
+function toolboxRoleDefinitions(?PDO $pdo = null): array
+{
+    $fallback = toolboxDefaultRoleDefinitions();
+    $pdo = $pdo ?: db();
+    if (!toolboxTableExists($pdo, 'toolbox_roles')) {
+        return $fallback;
+    }
+
+    try {
+        $rows = $pdo->query('SELECT role_key, label, description FROM toolbox_roles ORDER BY FIELD(role_key, "super_admin","admin","editor","viewer"), role_key')->fetchAll();
+        if (!$rows) {
+            return $fallback;
+        }
+        $result = [];
+        foreach ($rows as $row) {
+            $key = (string)($row['role_key'] ?? '');
+            if ($key === '') {
+                continue;
+            }
+            $result[$key] = [
+                'label' => (string)($row['label'] ?? ($fallback[$key]['label'] ?? ucfirst(str_replace('_', ' ', $key)))),
+                'description' => (string)($row['description'] ?? ($fallback[$key]['description'] ?? '')),
+            ];
+        }
+        return $result ?: $fallback;
+    } catch (Throwable $e) {
+        return $fallback;
+    }
+}
+
+function toolboxPermissionDefinitions(?PDO $pdo = null): array
+{
+    $fallback = toolboxDefaultPermissionDefinitions();
+    $pdo = $pdo ?: db();
+    if (!toolboxTableExists($pdo, 'toolbox_permissions')) {
+        return $fallback;
+    }
+
+    try {
+        $rows = $pdo->query('SELECT permission_key, label, description FROM toolbox_permissions ORDER BY sort_order ASC, permission_key ASC')->fetchAll();
+        if (!$rows) {
+            return $fallback;
+        }
+        $result = [];
+        foreach ($rows as $row) {
+            $key = (string)($row['permission_key'] ?? '');
+            if ($key === '') {
+                continue;
+            }
+            $result[$key] = [
+                'label' => (string)($row['label'] ?? ($fallback[$key]['label'] ?? $key)),
+                'description' => (string)($row['description'] ?? ($fallback[$key]['description'] ?? '')),
+            ];
+        }
+        return $result ?: $fallback;
+    } catch (Throwable $e) {
+        return $fallback;
+    }
+}
+
+function toolboxRolePermissionMap(?PDO $pdo = null): array
+{
+    $fallback = toolboxDefaultRolePermissionMap();
+    $pdo = $pdo ?: db();
+    if (!toolboxTableExists($pdo, 'toolbox_role_permissions')) {
+        return $fallback;
+    }
+
+    try {
+        $rows = $pdo->query('SELECT role_key, permission_key FROM toolbox_role_permissions ORDER BY role_key, permission_key')->fetchAll();
+        if (!$rows) {
+            return $fallback;
+        }
+        $map = [];
+        foreach ($rows as $row) {
+            $role = (string)($row['role_key'] ?? '');
+            $permission = (string)($row['permission_key'] ?? '');
+            if ($role === '' || $permission === '') {
+                continue;
+            }
+            $map[$role][] = $permission;
+        }
+        foreach ($map as $role => $permissions) {
+            $map[$role] = array_values(array_unique($permissions));
+        }
+        return $map ?: $fallback;
+    } catch (Throwable $e) {
+        return $fallback;
+    }
+}
+
+function toolboxRoleHasPermission(string $role, string $permission, ?PDO $pdo = null): bool
+{
+    if ($role === 'super_admin') {
+        return true;
+    }
+    $map = toolboxRolePermissionMap($pdo ?: db());
+    return in_array($permission, $map[$role] ?? [], true);
+}
+
+function toolboxUserPermissions(?array $user = null, ?PDO $pdo = null): array
+{
+    $user = $user ?: toolboxCurrentUser($pdo ?: db());
+    if (!$user) {
+        return [];
+    }
+    $role = (string)($user['role'] ?? 'viewer');
+    $pdo = $pdo ?: db();
+    $map = toolboxRolePermissionMap($pdo);
+    if ($role === 'super_admin') {
+        return array_keys(toolboxPermissionDefinitions($pdo));
+    }
+    return $map[$role] ?? [];
+}
+
+function toolboxUserCan(string $permission, ?array $user = null, ?PDO $pdo = null): bool
+{
+    $pdo = $pdo ?: db();
+    $user = $user ?: toolboxCurrentUser($pdo);
+    if (!$user) {
+        return false;
+    }
+    return toolboxRoleHasPermission((string)($user['role'] ?? 'viewer'), $permission, $pdo);
+}
+
+function toolboxRequirePermission(string $permission): array
+{
+    $pdo = db();
+    $user = toolboxRequireLogin();
+    if (!toolboxUserCan($permission, $user, $pdo)) {
+        toolboxFlash('error', 'You do not have permission to access that page.');
+        toolboxRedirect('index.php');
+    }
+    return $user;
+}
+
+
+function toolboxDefaultTools(): array
+{
+    return [
+        [
+            'id' => 0,
+            'tool_key' => 'rack-planner',
+            'name' => 'Rack Planner',
+            'description' => 'Build rack layouts, manage exports, and keep rack documentation together.',
+            'home_path' => 'tools/rack-planner/index.php',
+            'required_permission' => 'rack_planner.access',
+            'status' => 'published',
+            'status_note' => null,
+            'sort_order' => 10,
+        ],
+    ];
+}
+
+function toolboxToolStatusDefinitions(): array
+{
+    return [
+        'draft' => ['label' => 'Draft'],
+        'published' => ['label' => 'Published'],
+        'on_hold' => ['label' => 'On hold'],
+        'archived' => ['label' => 'Archived'],
+        'deleted' => ['label' => 'Deleted'],
+    ];
+}
+
+function toolboxToolStatusLabel(string $status): string
+{
+    $definitions = toolboxToolStatusDefinitions();
+    return $definitions[$status]['label'] ?? ucfirst(str_replace('_', ' ', $status));
+}
+
+function toolboxToolsTableExists(?PDO $pdo = null): bool
+{
+    return toolboxTableExists($pdo ?: db(), 'toolbox_tools');
+}
+
+function toolboxNormalizeToolRow(array $row): array
+{
+    return [
+        'id' => (int)($row['id'] ?? 0),
+        'tool_key' => (string)($row['tool_key'] ?? ''),
+        'name' => (string)($row['name'] ?? ''),
+        'description' => (string)($row['description'] ?? ''),
+        'home_path' => (string)($row['home_path'] ?? ''),
+        'required_permission' => (string)($row['required_permission'] ?? ''),
+        'status' => (string)($row['status'] ?? 'draft'),
+        'status_note' => isset($row['status_note']) ? (string)$row['status_note'] : null,
+        'sort_order' => (int)($row['sort_order'] ?? 0),
+        'created_at' => (string)($row['created_at'] ?? ''),
+        'updated_at' => (string)($row['updated_at'] ?? ''),
+    ];
+}
+
+function toolboxLoadAllTools(?PDO $pdo = null): array
+{
+    $pdo = $pdo ?: db();
+    if (!toolboxToolsTableExists($pdo)) {
+        return array_map('toolboxNormalizeToolRow', toolboxDefaultTools());
+    }
+
+    try {
+        $stmt = $pdo->query('SELECT * FROM toolbox_tools ORDER BY sort_order ASC, name ASC, tool_key ASC');
+        $rows = $stmt->fetchAll();
+        if (!$rows) {
+            return array_map('toolboxNormalizeToolRow', toolboxDefaultTools());
+        }
+        return array_map('toolboxNormalizeToolRow', $rows);
+    } catch (Throwable $e) {
+        return array_map('toolboxNormalizeToolRow', toolboxDefaultTools());
+    }
+}
+
+function toolboxLoadToolById(int $toolId, ?PDO $pdo = null): ?array
+{
+    $pdo = $pdo ?: db();
+    foreach (toolboxLoadAllTools($pdo) as $tool) {
+        if ((int)$tool['id'] === $toolId) {
+            return $tool;
+        }
+    }
+    return null;
+}
+
+function toolboxLoadToolByKey(string $toolKey, ?PDO $pdo = null): ?array
+{
+    $toolKey = trim($toolKey);
+    if ($toolKey === '') {
+        return null;
+    }
+
+    $pdo = $pdo ?: db();
+    foreach (toolboxLoadAllTools($pdo) as $tool) {
+        if ((string)$tool['tool_key'] === $toolKey) {
+            return $tool;
+        }
+    }
+    return null;
+}
+
+function toolboxToolIsVisibleInLauncher(array $tool): bool
+{
+    return (string)($tool['status'] ?? '') === 'published';
+}
+
+function toolboxToolAccessibleForUser(array $tool, array $user, ?PDO $pdo = null): bool
+{
+    $pdo = $pdo ?: db();
+    $requiredPermission = trim((string)($tool['required_permission'] ?? ''));
+    if ($requiredPermission !== '' && !toolboxUserCan($requiredPermission, $user, $pdo)) {
+        return false;
+    }
+
+    $status = (string)($tool['status'] ?? 'draft');
+    if ($status === 'published') {
+        return true;
+    }
+
+    return toolboxUserCan('tools.manage', $user, $pdo);
+}
+
+function toolboxVisibleToolsForUser(array $user, ?PDO $pdo = null): array
+{
+    $pdo = $pdo ?: db();
+    $tools = [];
+    foreach (toolboxLoadAllTools($pdo) as $tool) {
+        if (!toolboxToolIsVisibleInLauncher($tool)) {
+            continue;
+        }
+        if (!toolboxToolAccessibleForUser($tool, $user, $pdo)) {
+            continue;
+        }
+        $tools[] = $tool;
+    }
+    return $tools;
+}
+
+function toolboxRequireToolAccess(string $toolKey, string $permission): array
+{
+    $pdo = db();
+    $user = toolboxRequirePermission($permission);
+    $tool = toolboxLoadToolByKey($toolKey, $pdo);
+    if (!$tool) {
+        toolboxFlash('error', 'That tool is not registered in the toolbox.');
+        toolboxRedirect('index.php');
+    }
+
+    if (!toolboxToolAccessibleForUser($tool, $user, $pdo)) {
+        $status = (string)($tool['status'] ?? 'draft');
+        $message = $status === 'deleted'
+            ? 'This tool has been deleted and is hidden from normal users.'
+            : 'This tool is currently not available to normal users.';
+        toolboxFlash('error', $message);
+        toolboxRedirect('index.php');
+    }
+
+    return $user;
+}

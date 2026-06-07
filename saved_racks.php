@@ -1,6 +1,4 @@
 <?php
-require_once __DIR__ . '/../../bootstrap.php';
-$user = toolboxRequireToolAccess('rack-planner', 'rack_planner.racks.manage');
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/rack_repository.php';
 
@@ -218,7 +216,7 @@ function h($value): string {
         <p>Manage your saved rack documents here. You can open racks in the editor, duplicate them as a starting point for a variation, delete them and quickly filter by name, location, project or template.</p>
       </div>
       <div class="hero-actions">
-        <a class="button secondary" href="../../index.php">Home</a>
+        <a class="button secondary" href="index.php">Home</a>
         <a class="button primary" href="editor.php?new=1">New rack</a>
       </div>
     </div>
