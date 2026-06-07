@@ -40,6 +40,8 @@ try {
         $name = trim((string)($_POST['name'] ?? ''));
         $toolKey = normalizeToolKey((string)($_POST['tool_key'] ?? ''));
         $description = trim((string)($_POST['description'] ?? ''));
+        $toolIcon = trim((string)($_POST['tool_icon'] ?? ''));
+        $versionLabel = trim((string)($_POST['version_label'] ?? ''));
         $homePath = ltrim(trim((string)($_POST['home_path'] ?? '')), '/');
         $requiredPermission = trim((string)($_POST['required_permission'] ?? ''));
         $status = normalizeToolStatus((string)($_POST['status'] ?? 'draft'));
@@ -55,12 +57,14 @@ try {
 
         if ($action === 'create_tool') {
             $stmt = $pdo->prepare(
-                'INSERT INTO toolbox_tools (tool_key, name, description, home_path, required_permission, status, status_note, sort_order)
-                 VALUES (:tool_key, :name, :description, :home_path, :required_permission, :status, :status_note, :sort_order)'
+                'INSERT INTO toolbox_tools (tool_key, name, tool_icon, version_label, description, home_path, required_permission, status, status_note, sort_order)
+                 VALUES (:tool_key, :name, :tool_icon, :version_label, :description, :home_path, :required_permission, :status, :status_note, :sort_order)'
             );
             $stmt->execute([
                 ':tool_key' => $toolKey,
                 ':name' => $name,
+                ':tool_icon' => $toolIcon !== '' ? mb_substr($toolIcon, 0, 8) : null,
+                ':version_label' => $versionLabel !== '' ? mb_substr($versionLabel, 0, 40) : null,
                 ':description' => $description !== '' ? $description : null,
                 ':home_path' => $homePath,
                 ':required_permission' => $requiredPermission !== '' ? $requiredPermission : null,
@@ -78,6 +82,8 @@ try {
                 'UPDATE toolbox_tools
                  SET tool_key = :tool_key,
                      name = :name,
+                     tool_icon = :tool_icon,
+                     version_label = :version_label,
                      description = :description,
                      home_path = :home_path,
                      required_permission = :required_permission,
@@ -90,6 +96,10 @@ try {
             $stmt->execute([
                 ':tool_key' => $toolKey,
                 ':name' => $name,
+                ':tool_icon' => $toolIcon !== '' ? mb_substr($toolIcon, 0, 8) : null,
+                ':version_label' => $versionLabel !== '' ? mb_substr($versionLabel, 0, 40) : null,
+                ':tool_icon' => $toolIcon !== '' ? mb_substr($toolIcon, 0, 8) : null,
+                ':version_label' => $versionLabel !== '' ? mb_substr($versionLabel, 0, 40) : null,
                 ':description' => $description !== '' ? $description : null,
                 ':home_path' => $homePath,
                 ':required_permission' => $requiredPermission !== '' ? $requiredPermission : null,

@@ -11,13 +11,34 @@ $statusDefinitions = toolboxToolStatusDefinitions();
 $permissionDefinitions = toolboxPermissionDefinitions($pdo);
 $tools = [];
 $databaseError = null;
+$stats = [
+    'total' => 0,
+    'published' => 0,
+    'on_hold' => 0,
+    'archived' => 0,
+    'deleted' => 0,
+];
 
 try {
-    $tools = toolboxLoadAllTools($pdo);
+    $allTools = toolboxLoadAllTools($pdo);
+    foreach ($allTools as $tool) {
+        $stats['total']++;
+        $status = (string)($tool['status'] ?? 'draft');
+        if (isset($stats[$status])) {
+            $stats[$status]++;
+        }
+    }
+    $tools = $allTools;
     if ($search !== '') {
         $needle = mb_strtolower($search);
         $tools = array_values(array_filter($tools, static function (array $tool) use ($needle): bool {
-            $haystack = mb_strtolower(($tool['name'] ?? '') . ' ' . ($tool['tool_key'] ?? '') . ' ' . ($tool['description'] ?? '') . ' ' . ($tool['home_path'] ?? ''));
+            $haystack = mb_strtolower(
+                ($tool['name'] ?? '') . ' ' .
+                ($tool['tool_key'] ?? '') . ' ' .
+                ($tool['description'] ?? '') . ' ' .
+                ($tool['home_path'] ?? '') . ' ' .
+                ($tool['version_label'] ?? '')
+            );
             return strpos($haystack, $needle) !== false;
         }));
     }
@@ -62,7 +83,7 @@ function h($value): string { return htmlspecialchars((string)$value, ENT_QUOTES,
     <header class="page-hero">
       <div>
         <h1>Tool registry</h1>
-        <p>Register tools and manage Draft, Published, On hold, Archived, and Deleted states.</p>
+        <p>Register tools, maintain launcher metadata, and control Draft, Published, On hold, Archived, and Deleted states.</p>
       </div>
     </header>
 
@@ -73,18 +94,42 @@ function h($value): string { return htmlspecialchars((string)$value, ENT_QUOTES,
       <div class="flash error">Database error: <?php echo h($databaseError); ?></div>
     <?php endif; ?>
 
+    <section class="stats-grid" style="margin-bottom:20px;">
+      <article class="stat-card">
+        <div class="stat-label">Registered</div>
+        <div class="stat-value"><?php echo (int)$stats['total']; ?></div>
+        <div class="stat-copy">All tools currently known to the toolbox.</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-label">Published</div>
+        <div class="stat-value"><?php echo (int)$stats['published']; ?></div>
+        <div class="stat-copy">Visible in the launcher for permitted users.</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-label">On hold / archived</div>
+        <div class="stat-value"><?php echo (int)$stats['on_hold'] + (int)$stats['archived']; ?></div>
+        <div class="stat-copy">Paused or preserved outside the live launcher.</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-label">Deleted</div>
+        <div class="stat-value"><?php echo (int)$stats['deleted']; ?></div>
+        <div class="stat-copy">Soft deleted and hidden from normal users.</div>
+      </article>
+    </section>
+
     <section class="panel" style="margin-bottom:20px;">
       <div class="panel-head">
         <h2><?php echo $editTool ? 'Edit tool' : 'Register tool'; ?></h2>
-        <p><?php echo $editTool ? 'Update metadata, permissions, and lifecycle status.' : 'Add a tool to the registry so it can be published to users.'; ?></p>
+        <p><?php echo $editTool ? 'Update launcher metadata, permissions, and lifecycle status.' : 'Add a tool to the registry so it can be published to users.'; ?></p>
       </div>
       <div class="panel-body">
-        <form method="post" action="tool_actions.php" class="form-stack">
+        <form method="post" action="tool_actions.php" class="form-grid two-up">
           <input type="hidden" name="_csrf" value="<?php echo h(toolboxCsrfToken()); ?>">
           <input type="hidden" name="action" value="<?php echo $editTool ? 'save_tool' : 'create_tool'; ?>">
           <?php if ($editTool): ?>
             <input type="hidden" name="tool_id" value="<?php echo (int)$editTool['id']; ?>">
           <?php endif; ?>
+
           <div class="field">
             <label for="name">Tool name</label>
             <input type="text" id="name" name="name" required value="<?php echo h($editTool['name'] ?? ''); ?>">
@@ -92,16 +137,29 @@ function h($value): string { return htmlspecialchars((string)$value, ENT_QUOTES,
           <div class="field">
             <label for="tool_key">Tool key</label>
             <input type="text" id="tool_key" name="tool_key" required value="<?php echo h($editTool['tool_key'] ?? ''); ?>" placeholder="rack-planner">
-            <small class="help">Use a stable slug-like key, e.g. <code>rack-planner</code>.</small>
+            <small class="help">Stable slug-like key, e.g. <code>rack-planner</code>.</small>
+          </div>
+
+          <div class="field">
+            <label for="tool_icon">Tool icon</label>
+            <input type="text" id="tool_icon" name="tool_icon" value="<?php echo h($editTool['tool_icon'] ?? ''); ?>" placeholder="🧰">
+            <small class="help">Use a short emoji or 1–2 characters for the launcher tile.</small>
           </div>
           <div class="field">
+            <label for="version_label">Version label</label>
+            <input type="text" id="version_label" name="version_label" value="<?php echo h($editTool['version_label'] ?? ''); ?>" placeholder="v1">
+          </div>
+
+          <div class="field field-span-2">
             <label for="description">Description</label>
             <textarea id="description" name="description" rows="3"><?php echo h($editTool['description'] ?? ''); ?></textarea>
           </div>
-          <div class="field">
+
+          <div class="field field-span-2">
             <label for="home_path">Home path</label>
             <input type="text" id="home_path" name="home_path" required value="<?php echo h($editTool['home_path'] ?? ''); ?>" placeholder="tools/rack-planner/index.php">
           </div>
+
           <div class="field">
             <label for="required_permission">Required permission</label>
             <select id="required_permission" name="required_permission">
@@ -120,15 +178,17 @@ function h($value): string { return htmlspecialchars((string)$value, ENT_QUOTES,
               <?php endforeach; ?>
             </select>
           </div>
+
           <div class="field">
             <label for="sort_order">Sort order</label>
             <input type="number" id="sort_order" name="sort_order" value="<?php echo (int)($editTool['sort_order'] ?? 100); ?>">
           </div>
           <div class="field">
             <label for="status_note">Status note</label>
-            <textarea id="status_note" name="status_note" rows="2" placeholder="Optional note shown to admins when a tool is on hold, archived, or deleted."><?php echo h($editTool['status_note'] ?? ''); ?></textarea>
+            <textarea id="status_note" name="status_note" rows="2" placeholder="Optional note for admins when a tool is on hold, archived, or deleted."><?php echo h($editTool['status_note'] ?? ''); ?></textarea>
           </div>
-          <div class="button-group">
+
+          <div class="button-group field-span-2">
             <button class="button primary" type="submit"><?php echo $editTool ? 'Save tool' : 'Create tool'; ?></button>
             <?php if ($editTool): ?>
               <a class="button secondary" href="admin_tools.php">Cancel</a>
@@ -141,7 +201,7 @@ function h($value): string { return htmlspecialchars((string)$value, ENT_QUOTES,
     <section class="panel">
       <div class="panel-head">
         <h2>Registered tools</h2>
-        <p>Use status actions to publish, put on hold, archive, or soft delete tools.</p>
+        <p>Use lifecycle actions to publish, put on hold, archive, or soft delete tools.</p>
       </div>
       <div class="panel-body">
         <form method="get" class="toolbar" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
@@ -174,18 +234,26 @@ function h($value): string { return htmlspecialchars((string)$value, ENT_QUOTES,
               <?php foreach ($tools as $tool): ?>
                 <tr>
                   <td>
-                    <strong><?php echo h($tool['name']); ?></strong><br>
-                    <small><?php echo h($tool['tool_key']); ?></small>
-                    <?php if (!empty($tool['description'])): ?><br><small><?php echo h($tool['description']); ?></small><?php endif; ?>
-                    <?php if (!empty($tool['status_note'])): ?><br><small>Status note: <?php echo h($tool['status_note']); ?></small><?php endif; ?>
+                    <div class="table-title-row">
+                      <span class="tool-card-icon small"><?php echo h($tool['tool_icon'] ?: '🧰'); ?></span>
+                      <div>
+                        <strong><?php echo h($tool['name']); ?></strong>
+                        <div class="muted"><small><?php echo h($tool['tool_key']); ?></small></div>
+                      </div>
+                    </div>
+                    <?php if (!empty($tool['version_label'])): ?><div><small class="muted">Version: <?php echo h($tool['version_label']); ?></small></div><?php endif; ?>
+                    <?php if (!empty($tool['description'])): ?><div><small><?php echo h($tool['description']); ?></small></div><?php endif; ?>
+                    <?php if (!empty($tool['status_note'])): ?><div><small>Status note: <?php echo h($tool['status_note']); ?></small></div><?php endif; ?>
                   </td>
-                  <td><span class="badge"><?php echo h(toolboxToolStatusLabel((string)$tool['status'])); ?></span></td>
+                  <td>
+                    <span class="badge status-<?php echo h(toolboxToolStatusTone((string)$tool['status'])); ?>"><?php echo h(toolboxToolStatusLabel((string)$tool['status'])); ?></span>
+                  </td>
                   <td><?php echo h($tool['required_permission'] ?: '—'); ?></td>
                   <td><code><?php echo h($tool['home_path']); ?></code></td>
                   <td>
                     <div class="button-group" style="margin-bottom:8px;">
-                      <a class="button secondary" href="admin_tools.php?edit=<?php echo (int)$tool['id']; ?>">Edit</a>
-                      <a class="button secondary" href="<?php echo h($tool['home_path']); ?>">Open</a>
+                      <a class="button secondary small" href="admin_tools.php?edit=<?php echo (int)$tool['id']; ?>">Edit</a>
+                      <a class="button secondary small" href="<?php echo h($tool['home_path']); ?>">Open</a>
                     </div>
                     <div class="button-group" style="gap:8px; flex-wrap:wrap;">
                       <?php foreach ($statusDefinitions as $statusKey => $statusDefinition): ?>
@@ -195,21 +263,21 @@ function h($value): string { return htmlspecialchars((string)$value, ENT_QUOTES,
                           <input type="hidden" name="action" value="set_status">
                           <input type="hidden" name="tool_id" value="<?php echo (int)$tool['id']; ?>">
                           <input type="hidden" name="status" value="<?php echo h($statusKey); ?>">
-                          <button class="button secondary" type="submit"><?php echo h($statusDefinition['label']); ?></button>
+                          <button class="button secondary small" type="submit"><?php echo h($statusDefinition['label']); ?></button>
                         </form>
                       <?php endforeach; ?>
                       <form method="post" action="tool_actions.php" style="display:inline;" onsubmit="return confirm('Soft delete this tool? It will be hidden from normal users.');">
                         <input type="hidden" name="_csrf" value="<?php echo h(toolboxCsrfToken()); ?>">
                         <input type="hidden" name="action" value="soft_delete">
                         <input type="hidden" name="tool_id" value="<?php echo (int)$tool['id']; ?>">
-                        <button class="button secondary" type="submit">Soft delete</button>
+                        <button class="button danger small" type="submit">Soft delete</button>
                       </form>
                       <?php if ((string)$tool['status'] === 'deleted'): ?>
                         <form method="post" action="tool_actions.php" style="display:inline;">
                           <input type="hidden" name="_csrf" value="<?php echo h(toolboxCsrfToken()); ?>">
                           <input type="hidden" name="action" value="restore_tool">
                           <input type="hidden" name="tool_id" value="<?php echo (int)$tool['id']; ?>">
-                          <button class="button secondary" type="submit">Restore to draft</button>
+                          <button class="button secondary small" type="submit">Restore to draft</button>
                         </form>
                       <?php endif; ?>
                     </div>

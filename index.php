@@ -5,9 +5,20 @@ $flash = toolboxConsumeFlash();
 $pdo = db();
 $visibleTools = toolboxVisibleToolsForUser($user, $pdo);
 $allTools = toolboxLoadAllTools($pdo);
-$adminToolCount = count(array_filter($allTools, static function (array $tool): bool {
-    return (string)($tool['status'] ?? '') !== 'deleted';
-}));
+$statusDefinitions = toolboxToolStatusDefinitions();
+$toolCounts = [
+    'visible' => count($visibleTools),
+    'published' => 0,
+    'on_hold' => 0,
+    'archived' => 0,
+    'deleted' => 0,
+];
+foreach ($allTools as $tool) {
+    $status = (string)($tool['status'] ?? 'draft');
+    if (isset($toolCounts[$status])) {
+        $toolCounts[$status]++;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -33,7 +44,7 @@ $adminToolCount = count(array_filter($allTools, static function (array $tool): b
     <header class="page-hero">
       <div>
         <h1>Toolbox</h1>
-        <p>Open published tools or jump into administration to manage users, roles, and tool lifecycle.</p>
+        <p>Launch published tools, keep the platform organised, and manage tool lifecycle from one place.</p>
       </div>
     </header>
 
@@ -41,10 +52,33 @@ $adminToolCount = count(array_filter($allTools, static function (array $tool): b
       <div class="flash <?php echo htmlspecialchars((string)$flash['type'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars((string)$flash['message'], ENT_QUOTES, 'UTF-8'); ?></div>
     <?php endif; ?>
 
+    <section class="stats-grid" style="margin-bottom:20px;">
+      <article class="stat-card">
+        <div class="stat-label">Visible tools</div>
+        <div class="stat-value"><?php echo (int)$toolCounts['visible']; ?></div>
+        <div class="stat-copy">Tools currently available in your launcher.</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-label">Published</div>
+        <div class="stat-value"><?php echo (int)$toolCounts['published']; ?></div>
+        <div class="stat-copy">Live for permitted users.</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-label">On hold / archived</div>
+        <div class="stat-value"><?php echo (int)$toolCounts['on_hold'] + (int)$toolCounts['archived']; ?></div>
+        <div class="stat-copy">Temporarily paused or kept for reference.</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-label">Deleted</div>
+        <div class="stat-value"><?php echo (int)$toolCounts['deleted']; ?></div>
+        <div class="stat-copy">Soft deleted and hidden from normal users.</div>
+      </article>
+    </section>
+
     <section class="panel" style="margin-bottom:20px;">
       <div class="panel-head">
-        <h2>Available tools</h2>
-        <p>Only published tools that match your permissions are shown here.</p>
+        <h2>Published tools</h2>
+        <p>Only published tools that match your permissions appear here.</p>
       </div>
       <div class="panel-body">
         <?php if (!$visibleTools): ?>
@@ -52,9 +86,21 @@ $adminToolCount = count(array_filter($allTools, static function (array $tool): b
         <?php else: ?>
           <div class="tool-grid">
             <?php foreach ($visibleTools as $tool): ?>
-              <a class="tool-card" href="<?php echo htmlspecialchars((string)$tool['home_path'], ENT_QUOTES, 'UTF-8'); ?>">
-                <div class="tool-card-title"><?php echo htmlspecialchars((string)$tool['name'], ENT_QUOTES, 'UTF-8'); ?></div>
+              <a class="tool-card tool-card-rich" href="<?php echo htmlspecialchars((string)$tool['home_path'], ENT_QUOTES, 'UTF-8'); ?>">
+                <div class="tool-card-top">
+                  <div class="tool-card-icon"><?php echo htmlspecialchars((string)($tool['tool_icon'] ?: '🧰'), ENT_QUOTES, 'UTF-8'); ?></div>
+                  <div class="tool-card-top-meta">
+                    <div class="tool-card-title"><?php echo htmlspecialchars((string)$tool['name'], ENT_QUOTES, 'UTF-8'); ?></div>
+                    <div class="tool-card-subtitle"><?php echo htmlspecialchars((string)$tool['tool_key'], ENT_QUOTES, 'UTF-8'); ?></div>
+                  </div>
+                </div>
                 <div class="tool-card-copy"><?php echo htmlspecialchars((string)$tool['description'], ENT_QUOTES, 'UTF-8'); ?></div>
+                <div class="tool-card-meta-row">
+                  <?php if (!empty($tool['version_label'])): ?>
+                    <span class="badge"><?php echo htmlspecialchars((string)$tool['version_label'], ENT_QUOTES, 'UTF-8'); ?></span>
+                  <?php endif; ?>
+                  <span class="badge status-<?php echo htmlspecialchars(toolboxToolStatusTone((string)$tool['status']), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(toolboxToolStatusLabel((string)$tool['status']), ENT_QUOTES, 'UTF-8'); ?></span>
+                </div>
               </a>
             <?php endforeach; ?>
           </div>
@@ -65,27 +111,45 @@ $adminToolCount = count(array_filter($allTools, static function (array $tool): b
     <?php if (toolboxUserCan('users.manage', $user) || toolboxUserCan('roles.manage', $user) || toolboxUserCan('tools.manage', $user)): ?>
       <section class="panel">
         <div class="panel-head">
-          <h2>Administration</h2>
-          <p>Manage access and tool lifecycle for the platform.</p>
+          <h2>Platform administration</h2>
+          <p>Keep users, permissions, and tool lifecycle under control.</p>
         </div>
         <div class="panel-body">
           <div class="tool-grid">
             <?php if (toolboxUserCan('users.manage', $user)): ?>
-              <a class="tool-card" href="admin_users.php">
-                <div class="tool-card-title">User management</div>
+              <a class="tool-card tool-card-rich" href="admin_users.php">
+                <div class="tool-card-top">
+                  <div class="tool-card-icon">👤</div>
+                  <div class="tool-card-top-meta">
+                    <div class="tool-card-title">User management</div>
+                    <div class="tool-card-subtitle">Accounts</div>
+                  </div>
+                </div>
                 <div class="tool-card-copy">Create users, change roles, deactivate access, and reset MFA.</div>
               </a>
             <?php endif; ?>
             <?php if (toolboxUserCan('roles.manage', $user)): ?>
-              <a class="tool-card" href="admin_roles.php">
-                <div class="tool-card-title">Roles and permissions</div>
+              <a class="tool-card tool-card-rich" href="admin_roles.php">
+                <div class="tool-card-top">
+                  <div class="tool-card-icon">🛡️</div>
+                  <div class="tool-card-top-meta">
+                    <div class="tool-card-title">Roles and permissions</div>
+                    <div class="tool-card-subtitle">Access model</div>
+                  </div>
+                </div>
                 <div class="tool-card-copy">Control which permissions each role receives across the toolbox.</div>
               </a>
             <?php endif; ?>
             <?php if (toolboxUserCan('tools.manage', $user)): ?>
-              <a class="tool-card" href="admin_tools.php">
-                <div class="tool-card-title">Tool registry</div>
-                <div class="tool-card-copy">Manage Draft, Published, On hold, Archived, and Deleted states for tools. Active tools: <?php echo (int)$adminToolCount; ?>.</div>
+              <a class="tool-card tool-card-rich" href="admin_tools.php">
+                <div class="tool-card-top">
+                  <div class="tool-card-icon">🧰</div>
+                  <div class="tool-card-top-meta">
+                    <div class="tool-card-title">Tool registry</div>
+                    <div class="tool-card-subtitle">Lifecycle</div>
+                  </div>
+                </div>
+                <div class="tool-card-copy">Register tools, set statuses, and decide what shows up in the toolbox launcher.</div>
               </a>
             <?php endif; ?>
           </div>

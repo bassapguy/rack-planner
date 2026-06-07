@@ -82,3 +82,8 @@ Daarna draait de library op de database.
 - `template_editor.php` - template-instellingen, logo-upload en veldconfiguratie
 - `save_template.php` - template opslaan naar MySQL
 - `template_actions.php` - dupliceren/verwijderen acties voor templates
+
+## Canonical Rack Planner location
+
+Rack Planner is now maintained under `tools/rack-planner/`.
+Legacy root Rack Planner pages/endpoints are thin compatibility wrappers only.

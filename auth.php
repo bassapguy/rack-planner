@@ -682,6 +682,8 @@ function toolboxDefaultTools(): array
             'id' => 0,
             'tool_key' => 'rack-planner',
             'name' => 'Rack Planner',
+            'tool_icon' => '🗄️',
+            'version_label' => 'v1',
             'description' => 'Build rack layouts, manage exports, and keep rack documentation together.',
             'home_path' => 'tools/rack-planner/index.php',
             'required_permission' => 'rack_planner.access',
@@ -695,11 +697,31 @@ function toolboxDefaultTools(): array
 function toolboxToolStatusDefinitions(): array
 {
     return [
-        'draft' => ['label' => 'Draft'],
-        'published' => ['label' => 'Published'],
-        'on_hold' => ['label' => 'On hold'],
-        'archived' => ['label' => 'Archived'],
-        'deleted' => ['label' => 'Deleted'],
+        'draft' => [
+            'label' => 'Draft',
+            'tone' => 'draft',
+            'description' => 'Visible only in the registry while the tool is being prepared.',
+        ],
+        'published' => [
+            'label' => 'Published',
+            'tone' => 'published',
+            'description' => 'Available in the toolbox launcher for permitted users.',
+        ],
+        'on_hold' => [
+            'label' => 'On hold',
+            'tone' => 'on-hold',
+            'description' => 'Temporarily unavailable to normal users.',
+        ],
+        'archived' => [
+            'label' => 'Archived',
+            'tone' => 'archived',
+            'description' => 'Kept for reference but no longer active.',
+        ],
+        'deleted' => [
+            'label' => 'Deleted',
+            'tone' => 'deleted',
+            'description' => 'Soft deleted and hidden from normal users.',
+        ],
     ];
 }
 
@@ -707,6 +729,12 @@ function toolboxToolStatusLabel(string $status): string
 {
     $definitions = toolboxToolStatusDefinitions();
     return $definitions[$status]['label'] ?? ucfirst(str_replace('_', ' ', $status));
+}
+
+function toolboxToolStatusTone(string $status): string
+{
+    $definitions = toolboxToolStatusDefinitions();
+    return (string)($definitions[$status]['tone'] ?? 'neutral');
 }
 
 function toolboxToolsTableExists(?PDO $pdo = null): bool
@@ -720,6 +748,8 @@ function toolboxNormalizeToolRow(array $row): array
         'id' => (int)($row['id'] ?? 0),
         'tool_key' => (string)($row['tool_key'] ?? ''),
         'name' => (string)($row['name'] ?? ''),
+        'tool_icon' => trim((string)($row['tool_icon'] ?? '')),
+        'version_label' => trim((string)($row['version_label'] ?? '')),
         'description' => (string)($row['description'] ?? ''),
         'home_path' => (string)($row['home_path'] ?? ''),
         'required_permission' => (string)($row['required_permission'] ?? ''),
